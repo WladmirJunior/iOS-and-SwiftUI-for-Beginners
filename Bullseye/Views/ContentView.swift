@@ -14,51 +14,90 @@ struct ContentView: View {
     @State private var game = Game()
     
     var body: some View {
-        VStack {
-            Text("🎯🎯🎯\nPUT THE BULLSEYE AS CLOSE AS YOU CAN")
-                .bold()
-                .kerning(2.0)
-                .font(.footnote)
-                .multilineTextAlignment(.center)
-                .lineSpacing(4.0)
-            Text(String(game.target))
-                .font(.largeTitle)
-                .fontWeight(.black)
-                .kerning(-1.0)
-            HStack {
-                Text("1")
-                    .bold()
-                Slider(value: $sliderValue, in: 1.0...100.0)
-                Text("100")
-                    .bold()
+        ZStack {
+            BackgroundView(game: $game)
+            VStack {
+                InstructionView(game: $game)
+                    .padding(.bottom, alertIsVisible ? CGFloat(0) : CGFloat(100))
+                if alertIsVisible {
+                    PointsView(alertIsVisible: $alertIsVisible, sliderValue: $sliderValue, game: $game)
+                        .transition(.scale)
+                } else {
+                    HitMeButton(alertIsVisible: $alertIsVisible, sliderValue: $sliderValue, game: $game)
+                        .transition(.scale)
+                }
             }
-            .padding()
-            Button(action: {
-                alertIsVisible.toggle()
-            }) {
-                Text("Hit me".uppercased())
-                    .bold()
-                    .font(.title3)
+            if !alertIsVisible {
+                SliderView(sliderValue: $sliderValue)
+                    .transition(.scale)
             }
-            .padding(20.0)
-            .background(Color.blue)
-            .foregroundColor(Color.white)
-            .cornerRadius(21.0)
-            .alert(isPresented: $alertIsVisible, content: {
-                let roundedValue = Int(sliderValue.rounded())
-                
-                return Alert(title: Text("Hello There!"),
-                             message: Text("The slider's values is \(roundedValue).\n" +
-                                            "You scored \(game.points(sliderValue: roundedValue)) points this round."),
-                             dismissButton: .default(Text("Awesome!")))
-            })
         }
+    }
+}
+
+struct InstructionView: View {
+    @Binding var game: Game
+    
+    var body: some View {
+        VStack {
+            InstructionText(text: "🎯🎯🎯\nPut the Bullseye as close as you can")
+                .padding(.leading, 30.0)
+                .padding(.trailing, 30.0)
+            BigNumberText(text: String(game.target))
+        }
+    }
+}
+
+struct SliderView: View {
+    @Binding var sliderValue: Double
+    
+    var body: some View {
+        HStack {
+            SliderLabelText(text: "1")
+            Slider(value: $sliderValue, in: 1.0...100.0)
+            SliderLabelText(text: "100")
+        }.padding()
+    }
+}
+
+struct HitMeButton: View {
+    @Binding var alertIsVisible: Bool
+    @Binding var sliderValue: Double
+    @Binding var game: Game
+    
+    var body: some View {
+        Button(action: {
+            withAnimation {
+                alertIsVisible = true
+            }
+        }) {
+            Text("Hit me".uppercased())
+                .bold()
+                .font(.title3)
+        }
+        .padding(20.0)
+        .background(
+            ZStack {
+                Color("ButtonColor")
+                LinearGradient(gradient: Gradient(colors: [Color.white.opacity(0.3), Color.clear]), startPoint: .top, endPoint: .bottom)
+            }
+        )
+        .foregroundColor(Color.white)
+        .cornerRadius(Constants.General.roundRectCornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Constants.General.roundRectCornerRadius)
+                .strokeBorder(Color.white, lineWidth: Constants.General.strokeWidth)
+        )
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+        ContentView()
+            .preferredColorScheme(.dark)
         ContentView().previewLayout(.fixed(width: 568, height: 320))
+        ContentView().previewLayout(.fixed(width: 568, height: 320))
+            .preferredColorScheme(.dark)
     }
 }
